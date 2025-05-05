@@ -306,7 +306,7 @@ const Journey = () => {
               </motion.div>
             </Link>
             <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600">
-              EQ Journey
+              Your EQ Learning Journey
             </h1>
           </div>
           
@@ -385,7 +385,7 @@ const Journey = () => {
             {conversationState.complete && (
               <div className="p-4 bg-green-50 dark:bg-green-900/20 border-t border-green-100 dark:border-green-900/30">
                 <p className="text-green-700 dark:text-green-400 text-sm mb-2">
-                  ✨ This conversation journey is complete! You can start a new one to continue developing your EQ.
+                  🌟 Amazing work! You've completed this reflection journey. Each conversation helps you grow stronger in understanding your emotions.
                 </p>
                 <button 
                   onClick={startNewJourney}
@@ -433,34 +433,47 @@ const Journey = () => {
               </div>
               
               <form onSubmit={handleManualSubmit} className="flex gap-2 mb-4">
-                {/* Unified mic button: If AI is speaking, clicking stops it. Otherwise, toggles speech recognition. */}
+                {/* User mic control button: blue means unmuted (can speak), red means muted */}
                 <button
                   type="button"
                   onClick={() => {
-                    if (aiSpeaking) {
-                      window.speechSynthesis.cancel();
-                      setAiSpeaking(false);
-                      return;
-                    }
-                    if (isListening) {
+                    if (isListening || listening) {
                       stopListening();
                     } else {
                       startListening();
                     }
                   }}
-                  disabled={isLoading || conversationState.complete}
+                  disabled={isLoading || aiSpeaking || conversationState.complete}
                   className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${
-                    (isListening || aiSpeaking)
-                      ? 'bg-red-600 hover:bg-red-700 text-white' 
-                      : (isLoading || conversationState.complete)
-                        ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
-                        : 'bg-purple-600 hover:bg-purple-700 text-white'
+                    (isLoading || aiSpeaking || conversationState.complete)
+                      ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+                      : (isListening || listening)
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
-                  title={aiSpeaking ? 'Stop AI voice' : isListening ? 'Stop recording' : 'Start recording'}
+                  title={(isListening || listening) ? 'Mute (stop speaking)' : 'Unmute (start speaking)'}
                 >
-                  {aiSpeaking ? <MicOff size={20} /> : isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                  {(isListening || listening) ? <Mic size={20} /> : <MicOff size={20} />}
                 </button>
-                
+
+                {/* AI voice control button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.speechSynthesis.cancel();
+                    setAiSpeaking(false);
+                  }}
+                  disabled={!aiSpeaking}
+                  className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${
+                    aiSpeaking
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+                  }`}
+                  title="Stop AI voice"
+                >
+                  <MicOff size={20} />
+                </button>
+
                 <button
                   type="submit"
                   disabled={!readyToAnalyze || isLoading || aiSpeaking || conversationState.complete}
@@ -510,20 +523,20 @@ const Journey = () => {
                   >
                     <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-2">
                       <li className="flex">
-                        <span className="text-purple-500 mr-2">•</span>
-                        <span>Speak naturally about your feelings and experiences</span>
+                        <span className="text-purple-500 mr-2">💡</span>
+                        <span>Express yourself freely - there are no wrong answers!</span>
                       </li>
                       <li className="flex">
-                        <span className="text-purple-500 mr-2">•</span>
-                        <span>Try to identify and name your emotions specifically</span>
+                        <span className="text-purple-500 mr-2">🎯</span>
+                        <span>Be specific about how you're feeling and why</span>
                       </li>
                       <li className="flex">
-                        <span className="text-purple-500 mr-2">•</span>
-                        <span>Consider how your emotions affect your thoughts and behaviors</span>
+                        <span className="text-purple-500 mr-2">🌱</span>
+                        <span>Growth happens step by step - take your time</span>
                       </li>
                       <li className="flex">
-                        <span className="text-purple-500 mr-2">•</span>
-                        <span>Answer each question thoughtfully for a better assessment</span>
+                        <span className="text-purple-500 mr-2">🤝</span>
+                        <span>Your responses help build better self-awareness</span>
                       </li>
                     </ul>
                   </motion.div>

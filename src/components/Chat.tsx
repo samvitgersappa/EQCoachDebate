@@ -8,19 +8,60 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 // Initialize Gemini API
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
 
-// Define debate topics
-const DEBATE_TOPICS = [
-  "Artificial intelligence is more beneficial than harmful to society",
-  "Social media has a net positive impact on society",
-  "Remote work should be the standard for most office jobs",
-  "Cryptocurrency will eventually replace traditional banking",
-  "The four-day work week should be widely adopted",
-  "Universal basic income should be implemented globally",
-  "Technological advancement is reducing human connection",
-  "Manned missions to Mars should be a global priority",
-  "Genetically modified foods are safe and necessary",
-  "Nuclear energy should be expanded to combat climate change"
-];
+// Update the DEBATE_TOPICS constant with categories and difficulty
+const DEBATE_TOPICS = {
+  beginner: [
+    {
+      topic: "Social media has a net positive impact on society",
+      category: "Technology & Society",
+      difficulty: "Beginner"
+    },
+    {
+      topic: "School uniforms should be mandatory",
+      category: "Education",
+      difficulty: "Beginner"
+    },
+    {
+      topic: "Video games have educational value",
+      category: "Education & Technology",
+      difficulty: "Beginner"
+    }
+  ],
+  intermediate: [
+    {
+      topic: "Remote work should be the standard for most office jobs",
+      category: "Work & Society",
+      difficulty: "Intermediate"
+    },
+    {
+      topic: "The four-day work week should be widely adopted",
+      category: "Work & Society",
+      difficulty: "Intermediate"
+    },
+    {
+      topic: "Artificial intelligence is more beneficial than harmful to society",
+      category: "Technology",
+      difficulty: "Intermediate"
+    }
+  ],
+  advanced: [
+    {
+      topic: "Universal basic income should be implemented globally",
+      category: "Economics & Society",
+      difficulty: "Advanced"
+    },
+    {
+      topic: "Cryptocurrency will eventually replace traditional banking",
+      category: "Economics & Technology",
+      difficulty: "Advanced"
+    },
+    {
+      topic: "Genetic engineering of human embryos should be permitted",
+      category: "Ethics & Science",
+      difficulty: "Advanced"
+    }
+  ]
+};
 
 // Debate stages
 type DebateStage = 'topic_selection' | 'side_selection' | 'opening_statement' | 'rebuttal' | 'closing_statement' | 'conclusion';
@@ -686,7 +727,7 @@ const Debate = () => {
               </motion.div>
             </Link>
             <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
-              Debate Arena
+              Debate Practice Arena
             </h1>
           </div>
           
@@ -772,41 +813,67 @@ const Debate = () => {
             {debateStage === 'topic_selection' && (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-100 dark:border-blue-900/30">
                 <h3 className="font-medium text-blue-700 dark:text-blue-300 mb-3">
-                  Select a topic to debate:
+                  Choose your debate topic:
                 </h3>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {topics.map((topic, index) => (
-                    <motion.button
-                      key={index}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleSelectTopic(topic)}
-                      className="p-3 bg-white dark:bg-gray-700 border border-blue-200 dark:border-blue-800 rounded-lg text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-sm"
-                    >
-                      {topic}
-                    </motion.button>
+                
+                <div className="space-y-6">
+                  {Object.entries(DEBATE_TOPICS).map(([level, topics]) => (
+                    <div key={level} className="space-y-2">
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                        {level === 'beginner' && '🌱'}
+                        {level === 'intermediate' && '⭐'}
+                        {level === 'advanced' && '🏆'}
+                        {level.charAt(0).toUpperCase() + level.slice(1)} Topics
+                      </h4>
+                      
+                      <div className="grid gap-2 md:grid-cols-2">
+                        {topics.map((topic, index) => (
+                          <motion.button
+                            key={index}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleSelectTopic(topic.topic)}
+                            className="p-3 bg-white dark:bg-gray-700 border border-blue-200 dark:border-blue-800 rounded-lg text-left hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                          >
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1">
+                              {topic.topic}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                {topic.category}
+                              </span>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
                 
-                <div className="mt-4 flex gap-2">
-                  <input
-                    type="text"
-                    value={customTopic}
-                    onChange={(e) => setCustomTopic(e.target.value)}
-                    placeholder="Or suggest your own topic..."
-                    className="flex-1 p-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                  <button
-                    onClick={handleCustomTopicSubmit}
-                    disabled={!customTopic.trim()}
-                    className={`p-3 rounded-lg ${
-                      !customTopic.trim()
-                        ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    }`}
-                  >
-                    <ArrowRight size={20} />
-                  </button>
+                <div className="mt-6">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    Have another topic in mind? Suggest your own:
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={customTopic}
+                      onChange={(e) => setCustomTopic(e.target.value)}
+                      placeholder="Enter your debate topic..."
+                      className="flex-1 p-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                    />
+                    <button
+                      onClick={handleCustomTopicSubmit}
+                      disabled={!customTopic.trim()}
+                      className={`px-4 rounded-lg ${
+                        !customTopic.trim()
+                          ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
+                          : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      }`}
+                    >
+                      Submit Topic
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -982,7 +1049,7 @@ const Debate = () => {
                   {/* User Argument Strengths */}
                   <div>
                     <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 mb-2">
-                      Your Argument Strengths
+                      What You Did Well 🌟
                     </h3>
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
                       <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300 list-disc pl-5">
@@ -996,9 +1063,12 @@ const Debate = () => {
                   {/* User Argument Weaknesses */}
                   <div>
                     <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 mb-2">
-                      Areas for Improvement
+                      Growth Opportunities 🌱
                     </h3>
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Here are some areas where you can focus to make your arguments even stronger:
+                      </p>
                       <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300 list-disc pl-5">
                         {debateAnalysis.userArgumentWeaknesses.map((weakness, index) => (
                           <li key={index}>{weakness}</li>
@@ -1010,7 +1080,7 @@ const Debate = () => {
                   {/* Debate Skills Assessment */}
                   <div>
                     <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 mb-2">
-                      Debate Skills Assessment
+                      Your Debate Skills Progress 📈
                     </h3>
                     <div className="space-y-3">
                       {debateAnalysis.userDebateSkills.map((skill, index) => (
@@ -1018,12 +1088,20 @@ const Debate = () => {
                           <div className="flex justify-between items-center mb-2">
                             <span className="font-medium text-gray-800 dark:text-gray-200">{skill.skill}</span>
                             <div className="flex items-center">
-                              <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                              <span className={`text-sm font-bold ${
+                                skill.rating >= 8 ? 'text-green-600 dark:text-green-400' :
+                                skill.rating >= 6 ? 'text-blue-600 dark:text-blue-400' :
+                                'text-indigo-600 dark:text-indigo-400'
+                              }`}>
                                 {skill.rating}/10
                               </span>
                               <div className="ml-2 bg-gray-200 dark:bg-gray-600 h-2 w-16 rounded-full overflow-hidden">
                                 <div 
-                                  className="bg-indigo-500 h-full rounded-full" 
+                                  className={`h-full rounded-full ${
+                                    skill.rating >= 8 ? 'bg-green-500' :
+                                    skill.rating >= 6 ? 'bg-blue-500' :
+                                    'bg-indigo-500'
+                                  }`}
                                   style={{ width: `${(skill.rating / 10) * 100}%` }}
                                 ></div>
                               </div>
@@ -1038,9 +1116,12 @@ const Debate = () => {
                   {/* Improvement Suggestions */}
                   <div>
                     <h3 className="font-medium text-lg text-gray-800 dark:text-gray-200 mb-2">
-                      Suggestions for Improvement
+                      Next Steps for Improvement 🎯
                     </h3>
                     <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                        Try these specific strategies in your next debate:
+                      </p>
                       <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                         {debateAnalysis.improvementSuggestions.map((suggestion, index) => (
                           <li key={index} className="flex items-start gap-2">
@@ -1092,18 +1173,18 @@ const Debate = () => {
                         className="space-y-2 mb-3"
                       >
                         <div className={`p-3 rounded-lg border ${debateStage === 'opening_statement' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/30' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'}`}>
-                          <p className="font-medium text-sm">Opening Statements</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Introduce your position and main arguments</p>
+                          <p className="font-medium text-sm">Opening Statement</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Share your main points clearly and confidently</p>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${debateStage === 'rebuttal' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/30' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'}`}>
-                          <p className="font-medium text-sm">Rebuttals</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Counter opponent's arguments and strengthen your position</p>
+                          <p className="font-medium text-sm">Rebuttal</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Address opposing arguments thoughtfully</p>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${debateStage === 'closing_statement' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/30' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'}`}>
-                          <p className="font-medium text-sm">Closing Statements</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">Summarize your points and deliver a final argument</p>
+                          <p className="font-medium text-sm">Closing Statement</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">Wrap up your strongest points with confidence</p>
                         </div>
                         
                         <div className={`p-3 rounded-lg border ${debateStage === 'conclusion' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-900/30' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'}`}>
@@ -1121,7 +1202,26 @@ const Debate = () => {
                     </h3>
                     <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
                       <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                        {/* ...existing code... */}
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500">💡</span>
+                          <span>Take your time to organize your thoughts before responding</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500">🎯</span>
+                          <span>Use evidence and examples to support your arguments</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500">🤝</span>
+                          <span>Stay respectful, even when disagreeing with the other side</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500">📝</span>
+                          <span>Practice active listening and address specific points</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-500">🌱</span>
+                          <span>Remember, improvement comes with practice - don't be afraid to make mistakes!</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
