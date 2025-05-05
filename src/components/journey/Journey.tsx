@@ -433,30 +433,33 @@ const Journey = () => {
               </div>
               
               <form onSubmit={handleManualSubmit} className="flex gap-2 mb-4">
-                {!isListening ? (
-                  <button
-                    type="button"
-                    onClick={startListening}
-                    disabled={aiSpeaking || isLoading || conversationState.complete}
-                    className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${
-                      (aiSpeaking || isLoading || conversationState.complete)
-                        ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed' 
+                {/* Unified mic button: If AI is speaking, clicking stops it. Otherwise, toggles speech recognition. */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (aiSpeaking) {
+                      window.speechSynthesis.cancel();
+                      setAiSpeaking(false);
+                      return;
+                    }
+                    if (isListening) {
+                      stopListening();
+                    } else {
+                      startListening();
+                    }
+                  }}
+                  disabled={isLoading || conversationState.complete}
+                  className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${
+                    (isListening || aiSpeaking)
+                      ? 'bg-red-600 hover:bg-red-700 text-white' 
+                      : (isLoading || conversationState.complete)
+                        ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
                         : 'bg-purple-600 hover:bg-purple-700 text-white'
-                    }`}
-                    title="Start recording"
-                  >
-                    <Mic size={20} />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={stopListening}
-                    className="h-12 w-12 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center"
-                    title="Stop recording"
-                  >
-                    <MicOff size={20} />
-                  </button>
-                )}
+                  }`}
+                  title={aiSpeaking ? 'Stop AI voice' : isListening ? 'Stop recording' : 'Start recording'}
+                >
+                  {aiSpeaking ? <MicOff size={20} /> : isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                </button>
                 
                 <button
                   type="submit"
