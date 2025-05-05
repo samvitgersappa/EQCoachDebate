@@ -53,16 +53,37 @@ const Journey = () => {
     checkMicrophonePermission();
   }, []);
 
+  // Update useEffect to prevent duplicate text accumulation
   useEffect(() => {
     if (transcript) {
-      setUserMessage(transcript);
+      // Only add the new transcript content, not already captured content
+      const currentTranscript = transcript.trim();
+      const currentUserMessage = userMessage.trim();
+      
+      if (currentTranscript && !currentUserMessage.endsWith(currentTranscript)) {
+        // If current message doesn't already contain this transcript
+        if (currentUserMessage && currentTranscript.includes(currentUserMessage)) {
+          // If transcript contains the full message (happens on reconnect), 
+          // just use the transcript to avoid duplication
+          setUserMessage(currentTranscript);
+        } else {
+          // Otherwise append only the new content
+          const newContent = currentUserMessage ? 
+            currentTranscript.slice(currentTranscript.indexOf(currentUserMessage) + currentUserMessage.length) : 
+            currentTranscript;
+          
+          if (newContent) {
+            setUserMessage(prev => (prev ? prev + ' ' : '') + newContent.trim());
+          }
+        }
+      }
     }
   }, [transcript]);
 
   useEffect(() => {
     if (!listening && isListening) {
       setIsListening(false);
-      handleSpeechEnd();
+      // Removed handleSpeechEnd() call - no longer resetting transcript or setting readyToAnalyze
     }
   }, [listening, isListening]);
 
@@ -82,7 +103,6 @@ const Journey = () => {
   }, []);
 
   const startListening = () => {
-    resetTranscript();
     setIsListening(true);
     SpeechRecognition.startListening({ continuous: true });
   };
@@ -90,10 +110,7 @@ const Journey = () => {
   const stopListening = () => {
     setIsListening(false);
     SpeechRecognition.stopListening();
-  };
-
-  const handleSpeechEnd = () => {
-    setReadyToAnalyze(true);
+    // Removed resetTranscript() - no longer resetting transcript when stopping
   };
 
   const speakMessage = (text: string) => {
@@ -186,8 +203,7 @@ const Journey = () => {
       
       setConversationState(updatedState);
       setUserMessage('');
-      resetTranscript();
-      setReadyToAnalyze(false);
+      resetTranscript(); // Only reset transcript after sending
       
     } catch (error) {
       console.error('Error in conversation:', error);
@@ -229,9 +245,7 @@ const Journey = () => {
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (readyToAnalyze) {
-      handleUserResponse();
-    }
+    handleUserResponse();
   };
 
   if (!browserSupportsSpeechRecognition) {
@@ -451,7 +465,7 @@ const Journey = () => {
                         ? 'bg-blue-600 hover:bg-blue-700 text-white'
                         : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
-                  title={(isListening || listening) ? 'Mute (stop speaking)' : 'Unmute (start speaking)'}
+                  title={(isListening || listening) ? 'Pause (stop listening)' : 'Resume (start listening)'}
                 >
                   {(isListening || listening) ? <Mic size={20} /> : <MicOff size={20} />}
                 </button>
@@ -476,9 +490,9 @@ const Journey = () => {
 
                 <button
                   type="submit"
-                  disabled={!readyToAnalyze || isLoading || aiSpeaking || conversationState.complete}
+                  disabled={!userMessage.trim() || isLoading || aiSpeaking || conversationState.complete}
                   className={`flex-1 px-6 py-2 rounded-lg transition-colors ${
-                    !readyToAnalyze || isLoading || aiSpeaking || conversationState.complete
+                    !userMessage.trim() || isLoading || aiSpeaking || conversationState.complete
                       ? 'bg-gray-300 dark:bg-gray-600 cursor-not-allowed'
                       : 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white'
                   }`}

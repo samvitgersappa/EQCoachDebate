@@ -113,7 +113,6 @@ const Debate = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Speech recognition setup
-  const [isListening, setIsListening] = useState(false);
   const [micPermission, setMicPermission] = useState<boolean | null>(null);
   
   const {
@@ -181,10 +180,30 @@ const Debate = () => {
     }
   };
 
-  // Update user message when transcript changes
+  // Update user message when transcript changes to accumulate text across pauses
   useEffect(() => {
     if (transcript) {
-      setUserMessage(transcript);
+      // Only add the new transcript content, not already captured content
+      const currentTranscript = transcript.trim();
+      const currentUserMessage = userMessage.trim();
+      
+      if (currentTranscript && !currentUserMessage.endsWith(currentTranscript)) {
+        // If current message doesn't already contain this transcript
+        if (currentUserMessage && currentTranscript.includes(currentUserMessage)) {
+          // If transcript contains the full message (happens on reconnect), 
+          // just use the transcript to avoid duplication
+          setUserMessage(currentTranscript);
+        } else {
+          // Otherwise append only the new content
+          const newContent = currentUserMessage ? 
+            currentTranscript.slice(currentTranscript.indexOf(currentUserMessage) + currentUserMessage.length) : 
+            currentTranscript;
+          
+          if (newContent) {
+            setUserMessage(prev => (prev ? prev + ' ' : '') + newContent.trim());
+          }
+        }
+      }
     }
   }, [transcript]);
 
@@ -223,24 +242,24 @@ const Debate = () => {
   };
 
   // Speech handling
-  const startListening = () => {
-    resetTranscript();
-    setIsListening(true);
-    SpeechRecognition.startListening({ continuous: true });
-    // Stop AI speech when starting listening
+  const handleMicButton = () => {
     if (aiSpeaking) {
       window.speechSynthesis.cancel();
       setAiSpeaking(false);
+      // Do not start listening if AI was speaking
+      return;
     }
-  };
-
-  const stopListening = () => {
-    setIsListening(false);
-    SpeechRecognition.stopListening();
-    // Stop AI speech when stopping listening
-    if (aiSpeaking) {
-      window.speechSynthesis.cancel();
-      setAiSpeaking(false);
+    if (listening) {
+      SpeechRecognition.stopListening();
+      // AI speech is already stopped above
+    } else {
+      // Removed resetTranscript() to allow accumulating text across pauses
+      SpeechRecognition.startListening({ continuous: true });
+      // Stop AI speech if somehow still on
+      if (aiSpeaking) {
+        window.speechSynthesis.cancel();
+        setAiSpeaking(false);
+      }
     }
   };
 
@@ -977,28 +996,15 @@ const Debate = () => {
                   {browserSupportsSpeechRecognition && (
                     <button
                       type="button"
-                      onClick={() => {
-                        // If AI is speaking, stop it
-                        if (aiSpeaking) {
-                          window.speechSynthesis.cancel();
-                          setAiSpeaking(false);
-                          return;
-                        }
-                        // Otherwise, toggle speech recognition
-                        if (isListening) {
-                          stopListening();
-                        } else {
-                          startListening();
-                        }
-                      }}
+                      onClick={handleMicButton}
                       disabled={isLoading || isRecording}
                       className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        isListening || aiSpeaking
+                        listening || aiSpeaking
                           ? 'bg-red-500 hover:bg-red-600 text-white' 
                           : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50'
                       } ${(isLoading || isRecording) && 'opacity-50 cursor-not-allowed'}`}
                     >
-                      {aiSpeaking ? <MicOff size={18} /> : isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                      {aiSpeaking ? <MicOff size={18} /> : listening ? <MicOff size={18} /> : <Mic size={18} />}
                     </button>
                   )}
                   
@@ -1246,19 +1252,19 @@ const Debate = () => {
       
       {/* Footer */}
       <footer className="mt-auto pt-8">
-        <div className="max-w-6xl mx-auto px-4 py-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+        <div class="max-w-6xl mx-auto px-4 py-4 border-t border-gray-200 dark:border-gray-800">
+          <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
               © {new Date().getFullYear()} Debate Arena. All rights reserved.
             </p>
-            <div className="flex items-center gap-6">
-              <Link to="/" className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+            <div class="flex items-center gap-6">
+              <Link to="/" class="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                 Home
               </Link>
-              <Link to="/chat" className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+              <Link to="/chat" class="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                 Debate
               </Link>
-              <Link to="/journey" className="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
+              <Link to="/journey" class="text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">
                 Journey
               </Link>
             </div>

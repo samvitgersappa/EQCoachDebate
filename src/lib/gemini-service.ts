@@ -80,6 +80,21 @@ export interface ConversationState {
   complete: boolean;
 }
 
+// Define the expected structure for analysisData returned from Gemini
+interface GeminiAnalysisData {
+  categoryScores?: Record<string, {
+    score: number;
+    comment: string;
+    examples: string[];
+  }>;
+  overallScore?: number;
+  strengths?: { area: string; evidence: string }[];
+  areas_for_improvement?: { area: string; suggestion: string }[];
+  emotional_vocabulary?: string[];
+  key_insights?: string[];
+  detailed_feedback?: string;
+}
+
 /**
  * Configure the Gemini model with appropriate safety settings
  */
@@ -314,7 +329,7 @@ export const analyzeEmotionalResponse = async (userMessage: string): Promise<EQA
     
     // Extract and parse JSON response
     let jsonMatch = analysisResult.match(/\{[\s\S]*\}/);
-    let analysisData = {};
+    let analysisData: GeminiAnalysisData = {};
     
     if (jsonMatch) {
       try {
@@ -368,8 +383,8 @@ export const analyzeEmotionalResponse = async (userMessage: string): Promise<EQA
     
     // Process category scores
     if (analysisData.categoryScores) {
-      Object.entries(analysisData.categoryScores).forEach(([category, data]: [string, any]) => {
-        result.categoryScores[category] = {
+      Object.entries(analysisData.categoryScores).forEach(([category, data]) => {
+        result.categoryScores![category] = {
           score: data.score,
           comment: data.comment,
           examples: data.examples
@@ -546,7 +561,7 @@ export const analyzeConversationResponses = async (state: ConversationState): Pr
     
     // Extract and parse JSON response
     let jsonMatch = analysisResult.match(/\{[\s\S]*\}/);
-    let analysisData = {};
+    let analysisData: GeminiAnalysisData = {};
     
     if (jsonMatch) {
       try {
@@ -600,8 +615,8 @@ export const analyzeConversationResponses = async (state: ConversationState): Pr
     
     // Process category scores
     if (analysisData.categoryScores) {
-      Object.entries(analysisData.categoryScores).forEach(([category, data]: [string, any]) => {
-        result.categoryScores[category] = {
+      Object.entries(analysisData.categoryScores).forEach(([category, data]) => {
+        result.categoryScores![category] = {
           score: data.score,
           comment: data.comment,
           examples: data.examples
